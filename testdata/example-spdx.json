@@ -1,0 +1,110 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "Test SBOM - Simple",
+  "documentNamespace": "https://example.com/test-sbom-simple",
+  "creationInfo": {
+    "created": "2024-01-15T10:00:00Z",
+    "creators": [
+      "Tool: test-generator"
+    ]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-express",
+      "name": "express",
+      "versionInfo": "4.18.2",
+      "packageFileName": "express-4.18.2.tgz",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "https://registry.npmjs.org/express/-/express-4.18.2.tgz",
+      "filesAnalyzed": false,
+      "packageLicenseConcluded": "NOASSERTION",
+      "packageLicenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/express@4.18.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-lodash",
+      "name": "lodash",
+      "versionInfo": "4.17.21",
+      "packageFileName": "lodash-4.17.21.tgz",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz",
+      "filesAnalyzed": false,
+      "packageLicenseConcluded": "NOASSERTION",
+      "packageLicenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/lodash@4.17.21"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-requests",
+      "name": "requests",
+      "versionInfo": "2.31.0",
+      "packageFileName": "requests-2.31.0.tar.gz",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "https://pypi.org/project/requests/2.31.0/",
+      "filesAnalyzed": false,
+      "packageLicenseConcluded": "NOASSERTION",
+      "packageLicenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/requests@2.31.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-spring-core",
+      "name": "spring-core",
+      "versionInfo": "6.0.11",
+      "packageFileName": "spring-core-6.0.11.jar",
+      "supplier": "Organization: Spring",
+      "downloadLocation": "https://repo1.maven.org/maven2/org/springframework/spring-core/6.0.11/",
+      "filesAnalyzed": false,
+      "packageLicenseConcluded": "NOASSERTION",
+      "packageLicenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:maven/org.springframework/spring-core@6.0.11"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-gin",
+      "name": "gin",
+      "versionInfo": "v1.9.1",
+      "packageFileName": "gin-v1.9.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "https://github.com/gin-gonic/gin",
+      "filesAnalyzed": false,
+      "packageLicenseConcluded": "NOASSERTION",
+      "packageLicenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/gin-gonic/gin@v1.9.1"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+{
+  "extends": ["github>boringbin/renovate-config"]
+}

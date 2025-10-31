@@ -1,0 +1,87 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    # May want to enable this in the future
+    # - make check
+    - make tidy
+
+builds:
+  - id: sbomlicense
+    binary: sbomlicense
+    main: ./cmd/sbomlicense
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    ldflags:
+      - -s -w
+      - -X github.com/boringbin/sbomlicense/internal/version.Version={{.Version}}
+  - id: sbomlicensed
+    binary: sbomlicensed
+    main: ./cmd/sbomlicensed
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    ldflags:
+      - -s -w
+      - -X github.com/boringbin/sbomlicense/internal/version.Version={{.Version}}
+
+archives:
+  # Separate archive for CLI tool
+  - id: sbomlicense
+    builds:
+      - sbomlicense
+    formats: [tar.gz]
+    name_template: >-
+      sbomlicense_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+  # Separate archive for daemon
+  - id: sbomlicensed
+    builds:
+      - sbomlicensed
+    formats: [tar.gz]
+    name_template: >-
+      sbomlicensed_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
