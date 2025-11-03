@@ -4,7 +4,11 @@ Two tools, `sbomlicense` and `sbomlicensed`, that enrich SBOM files with license
 
 Uses the [Ecosyste.ms](https://ecosyste.ms/) API to get information about a package.
 
-## Usage
+## `sbomlicense`
+
+A simple CLI tool for local, one-off enrichment of SBOM files with license information.
+
+### Usage
 
 ```text
 Usage: sbomlicense [OPTIONS] <sbom-file>
@@ -31,6 +35,14 @@ Options:
         Show version and exit
 ```
 
+## `sbomlicensed`
+
+A daemon for high-volume enrichment of SBOM files with license information.
+
+Uses a [bbolt](https://github.com/etcd-io/bbolt) database to store enrichment results.
+
+### Usage
+
 ```text
 Usage of sbomlicensed:
   -cache-path string
@@ -45,6 +57,20 @@ Usage of sbomlicensed:
         HTTP port to listen on (default 8080)
   -v    Verbose output (debug mode)
 ```
+
+## Why?
+
+License information is key to understanding a software project. SBOM generators sometimes miss licenses which are
+otherwise available online.
+
+Automatic license enrichment isn't always possible, and you will sometimes be left with gaps. This can happen
+because:
+
+- The package information provider has no knowledge of the package
+- The package information provider has resolved the package, but the license is not available
+- The package information provider has resolved the package, but the license has not been normalized
+
+Therefore, for complete licensing information, you will need to manually review the SBOM and add any missing licenses.
 
 ## License
 

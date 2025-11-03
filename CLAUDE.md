@@ -48,10 +48,12 @@ docker compose up -d
 # Health check
 curl http://localhost:8080/health
 
-# Enrich SBOM
-curl -X POST http://localhost:8080/enrich \
-  -H "Content-Type: application/json" \
-  -d '{"sbom": {...}, "parallelism": 20}' > enriched.json
+# Enrich SBOM (handles large files)
+jq -n --slurpfile sbom testdata/example-spdx.json '{sbom: $sbom[0]}' \
+  | curl -X POST http://localhost:8080/enrich \
+    -H "Content-Type: application/json" \
+    -d @- \
+  | jq '.sbom' > enriched.json
 ```
 
 **IMPORTANT:** Email is REQUIRED for daemon mode (ecosyste.ms API polite pool access).
