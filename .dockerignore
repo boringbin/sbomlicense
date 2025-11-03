@@ -1,0 +1,23 @@
+# Ignore everything
+*
+*/
+
+# Allow these things
+!go.mod
+!go.sum
+!cmd/
+!data/
+# Remember to add any new project packages here
+!internal/
+
+# Ignore these files.
+**/*.exe
+**/*.exe~
+**/*.dll
+**/*.so
+**/*.dylib
+**/*.test
+**/*.out
+**/vendor/
+**/go.work
+**/go.work.sum

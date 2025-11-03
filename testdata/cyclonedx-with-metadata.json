@@ -1,0 +1,95 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:9f6a7c8b-2d4e-4f1a-8c3d-5e6f7a8b9c0d",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-01-15T10:00:00Z",
+    "tools": [
+      {
+        "name": "cdxgen",
+        "version": "9.0.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "bom-ref": "pkg:app/my-web-app@2.0.0",
+      "name": "my-web-app",
+      "version": "2.0.0",
+      "description": "A sample web application for testing"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/react@18.2.0",
+      "name": "react",
+      "version": "18.2.0",
+      "description": "React is a JavaScript library for building user interfaces.",
+      "purl": "pkg:npm/react@18.2.0",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://reactjs.org/"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/facebook/react"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/axios@1.4.0",
+      "name": "axios",
+      "version": "1.4.0",
+      "description": "Promise based HTTP client for the browser and node.js",
+      "purl": "pkg:npm/axios@1.4.0",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://axios-http.com"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/typescript@5.1.6",
+      "name": "typescript",
+      "version": "5.1.6",
+      "description": "TypeScript is a language for application scale JavaScript development",
+      "purl": "pkg:npm/typescript@5.1.6",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.typescriptlang.org/"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:pypi/flask@2.3.2",
+      "name": "flask",
+      "version": "2.3.2",
+      "description": "A simple framework for building complex web applications.",
+      "purl": "pkg:pypi/flask@2.3.2",
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://palletsprojects.com/p/flask/"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:app/my-web-app@2.0.0",
+      "dependsOn": [
+        "pkg:npm/react@18.2.0",
+        "pkg:npm/axios@1.4.0",
+        "pkg:npm/typescript@5.1.6",
+        "pkg:pypi/flask@2.3.2"
+      ]
+    }
+  ]
+}
