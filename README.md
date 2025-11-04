@@ -60,6 +60,10 @@ Usage of sbomlicensed:
   -v    Verbose output (debug mode)
 ```
 
+### Production Deployment
+
+See **[HOSTING.md](HOSTING.md)** for detailed deployment instructions.
+
 ## Why?
 
 License information is key to understanding a software project. SBOM generators sometimes miss licenses which are

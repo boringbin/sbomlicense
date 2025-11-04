@@ -1,0 +1,104 @@
+# Caddyfile for sbomlicensed - Production Configuration
+#
+# This file provides a production-ready reverse proxy configuration for sbomlicensed.
+# Copy to Caddyfile and customize for your deployment.
+#
+# Usage:
+#   1. Copy this file: cp Caddyfile.example Caddyfile
+#   2. Replace sbomlicensed.example.com with your domain
+#   3. Set SBOM_AUTH_TOKEN environment variable
+#   4. Run: caddy run --config Caddyfile
+#
+# See HOSTING.md for detailed deployment instructions.
+
+{
+	# Global options
+	# Disable admin API for production (no :2019 endpoint)
+	admin off
+
+	# Optional: Enable metrics for monitoring
+	# servers {
+	#     metrics
+	# }
+}
+
+# Main SBOM enrichment endpoint
+sbomlicensed.example.com {
+	# Automatic HTTPS via Let's Encrypt
+	# Caddy will automatically obtain and renew certificates
+
+	# Rate limiting: 100 requests per minute per IP
+	# Prevents DoS attacks and API quota exhaustion
+	rate_limit {
+		zone sbom_api {
+			key {remote_host}
+			events 100
+			window 1m
+		}
+	}
+
+	# Health check endpoint (public, no auth)
+	# Used by load balancers and monitoring systems
+	handle /health {
+		reverse_proxy localhost:8080
+	}
+
+	# SBOM enrichment endpoint (requires authentication)
+	handle /enrich {
+		# Bearer token authentication
+		# Token must be passed in Authorization header:
+		#   Authorization: Bearer <SBOM_AUTH_TOKEN>
+		@authenticated {
+			header Authorization "Bearer {env.SBOM_AUTH_TOKEN}"
+		}
+
+		handle @authenticated {
+			# Forward to sbomlicensed daemon
+			reverse_proxy localhost:8080 {
+				# Health check for upstream
+				health_uri /health
+				health_interval 30s
+				health_timeout 5s
+
+				# Timeouts (daemon has 10min enrichment timeout)
+				# Allow up to 15 minutes for large SBOMs
+				timeout 15m
+			}
+		}
+
+		# Return 401 for missing/invalid tokens
+		respond "Unauthorized: Bearer token required" 401 {
+			close
+		}
+	}
+
+	# Default response for all other paths
+	handle {
+		respond "Not Found" 404
+	}
+
+	# Security headers
+	header {
+		# Prevent MIME type sniffing
+		X-Content-Type-Options "nosniff"
+		# Prevent clickjacking
+		X-Frame-Options "DENY"
+		# Enable XSS protection
+		X-XSS-Protection "1; mode=block"
+		# Don't send referrer to external sites
+		Referrer-Policy "no-referrer-when-downgrade"
+		# Remove server version
+		-Server
+	}
+
+	# Access logging (JSON format for easy parsing)
+	log {
+		output file /var/log/caddy/sbom-access.log {
+			roll_size 100mb
+			roll_keep 10
+			roll_keep_for 720h
+		}
+		format json
+		level INFO
+	}
+}

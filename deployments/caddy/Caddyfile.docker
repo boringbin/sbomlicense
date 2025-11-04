@@ -1,0 +1,69 @@
+# Caddyfile for Docker Compose deployments
+#
+# This configuration is designed for use with Docker Compose where
+# sbomlicensed runs in a separate container on the same network.
+#
+# Key differences from standalone Caddyfile:
+# - Reverse proxy target is 'sbomlicensed:8080' (container name)
+# - Simpler logging to stdout (Docker captures logs)
+# - Listens on :80 (TLS termination handled externally if needed)
+#
+# See docker-compose.production.yml for full deployment example.
+
+{
+	# Disable admin API
+	admin off
+}
+
+# Listen on port 80 (upgrade to 443 for production with domain)
+:80 {
+	# Rate limiting
+	rate_limit {
+		zone api {
+			key {remote_host}
+			events 100
+			window 1m
+		}
+	}
+
+	# Health check (public)
+	handle /health {
+		reverse_proxy sbomlicensed:8080
+	}
+
+	# Enrich endpoint (requires bearer token)
+	handle /enrich {
+		@authenticated {
+			header Authorization "Bearer {env.SBOM_AUTH_TOKEN}"
+		}
+
+		handle @authenticated {
+			reverse_proxy sbomlicensed:8080 {
+				health_uri /health
+				health_interval 30s
+				timeout 15m
+			}
+		}
+
+		respond "Unauthorized" 401
+	}
+
+	# Default handler
+	handle {
+		respond "Not Found" 404
+	}
+
+	# Security headers
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		X-XSS-Protection "1; mode=block"
+		-Server
+	}
+
+	# Log to stdout (Docker Compose captures)
+	log {
+		format json
+		level INFO
+	}
+}

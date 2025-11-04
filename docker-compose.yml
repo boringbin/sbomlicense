@@ -17,6 +17,39 @@ services:
       - cache-data:/data
     restart: unless-stopped
 
+  # Optional: Caddy reverse proxy for production deployments
+  # Provides TLS, authentication, and rate limiting
+  # Uncomment this service to enable secure remote access
+  # See HOSTING.md for detailed configuration instructions
+  #
+  # caddy:
+  #   image: caddy:2-alpine
+  #   container_name: caddy
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./deployments/caddy/Caddyfile.docker:/etc/caddy/Caddyfile:ro
+  #     - caddy-data:/data
+  #     - caddy-config:/config
+  #   environment:
+  #     # Generate token: openssl rand -base64 32
+  #     # Store securely, use in GitHub Actions secrets
+  #     - SBOM_AUTH_TOKEN=${SBOM_AUTH_TOKEN}
+  #   networks:
+  #     - sbom-internal
+  #   depends_on:
+  #     - sbomlicensed
+
+# Uncomment if using Caddy service above
+# networks:
+#   sbom-internal:
+#     driver: bridge
+
 volumes:
   cache-data:
     driver: local
+  # Uncomment if using Caddy service
+  # caddy-data:
+  # caddy-config:

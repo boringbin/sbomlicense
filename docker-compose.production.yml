@@ -1,0 +1,78 @@
+# Production Docker Compose configuration with Caddy reverse proxy
+#
+# This configuration runs sbomlicensed behind Caddy for secure remote access.
+# Suitable for CI/CD deployments and production environments.
+#
+# See HOSTING.md for detailed instructions.
+
+services:
+  sbomlicensed:
+    image: ghcr.io/boringbin/sbomlicensed:latest
+    # For local builds, uncomment:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    container_name: sbomlicensed
+    restart: unless-stopped
+    environment:
+      - EMAIL=${EMAIL:?EMAIL environment variable is required}
+      - CACHE_PATH=/app/data/cache.db
+      - PORT=8080
+    volumes:
+      - cache-data:/app/data
+    networks:
+      - sbom-internal
+    # No port exposure - only accessible via Caddy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      # Uncomment for metrics endpoint:
+      # - "2019:2019"
+    volumes:
+      # Use Docker-specific Caddyfile
+      - ./deployments/caddy/Caddyfile.docker:/etc/caddy/Caddyfile:ro
+      # Persistent storage for TLS certificates and cache
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      # Required: Authentication token for /enrich endpoint
+      # Generate with: openssl rand -base64 32
+      - SBOM_AUTH_TOKEN=${SBOM_AUTH_TOKEN:?SBOM_AUTH_TOKEN environment variable is required}
+    networks:
+      - sbom-internal
+    depends_on:
+      sbomlicensed:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+networks:
+  sbom-internal:
+    driver: bridge
+    # Optional: restrict network to local access only
+    # driver_opts:
+    #   com.docker.network.bridge.name: sbom0
+    #   com.docker.network.bridge.enable_ip_masquerade: "true"
+
+volumes:
+  cache-data:
+    driver: local
+  caddy-data:
+    driver: local
+  caddy-config:
+    driver: local
