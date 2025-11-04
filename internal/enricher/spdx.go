@@ -4,9 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/boringbin/sbomlicense/internal/cache"
@@ -45,6 +42,40 @@ type ExternalRef struct {
 	ReferenceCategory string `json:"referenceCategory"`
 	ReferenceType     string `json:"referenceType"`
 	ReferenceLocator  string `json:"referenceLocator"`
+}
+
+// GetPurl extracts the purl from the SPDX package's external references.
+func (p *Package) GetPurl() (string, error) {
+	return GetSPDXPackagePurl(p)
+}
+
+// HasLicense returns true if the package already has license information.
+// Checks both LicenseConcluded and LicenseDeclared fields.
+func (p *Package) HasLicense() bool {
+	return (p.LicenseConcluded != "" &&
+		p.LicenseConcluded != spdxLicenseNone &&
+		p.LicenseConcluded != spdxLicenseNoAssertion) ||
+		(p.LicenseDeclared != "" &&
+			p.LicenseDeclared != spdxLicenseNone &&
+			p.LicenseDeclared != spdxLicenseNoAssertion)
+}
+
+// SetLicense updates the package with the provided license string.
+// Sets LicenseConcluded as the primary field and also updates LicenseDeclared if it's empty.
+func (p *Package) SetLicense(license string) {
+	// Set LicenseConcluded (primary field)
+	p.LicenseConcluded = license
+	// Also set LicenseDeclared if it's empty
+	if p.LicenseDeclared == "" ||
+		p.LicenseDeclared == spdxLicenseNone ||
+		p.LicenseDeclared == spdxLicenseNoAssertion {
+		p.LicenseDeclared = license
+	}
+}
+
+// GetLogID returns the SPDX ID for logging purposes.
+func (p *Package) GetLogID() string {
+	return p.SPDXID
 }
 
 // UnwrapGitHubSBOM checks if the data is wrapped in GitHub's {"sbom": {...}} format and returns the unwrapped SPDX
@@ -113,8 +144,6 @@ func NewSPDXEnricher(provider provider.Provider, cache cache.Cache, cacheTTL tim
 }
 
 // Enrich enriches the SPDX SBOM with license information.
-//
-//nolint:gocognit // Complexity is inherent to parallel enrichment with worker pool pattern
 func (s *SPDXEnricher) Enrich(ctx context.Context, opts Options) ([]byte, error) {
 	// Parse the SBOM file into an SPDX document
 	doc, err := ParseSBOMFile(opts.SBOM)
@@ -122,99 +151,23 @@ func (s *SPDXEnricher) Enrich(ctx context.Context, opts Options) ([]byte, error)
 		return nil, fmt.Errorf("failed to parse SBOM file: %w", err)
 	}
 
-	if len(doc.Packages) == 0 {
-		// No packages to enrich, return original SBOM
-		return opts.SBOM, nil
-	}
-
-	// Determine parallelism
-	parallelism := opts.Parallelism
-	if parallelism <= 0 {
-		parallelism = 1
-	}
-
-	// Use provided logger or create a no-op logger
-	logger := opts.Logger
-	if logger == nil {
-		logger = slog.New(slog.NewTextHandler(io.Discard, nil))
-	}
-
-	// Create a channel for packages to enrich
-	type job struct {
-		pkg  *Package
-		purl string
-	}
-
-	jobs := make(chan job, len(doc.Packages))
-	var wg sync.WaitGroup
-
-	// Spawn workers
-	for range parallelism {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := range jobs {
-				// Check if package already has a license
-				// Try LicenseConcluded first, fallback to LicenseDeclared
-				hasLicense := (j.pkg.LicenseConcluded != "" &&
-					j.pkg.LicenseConcluded != spdxLicenseNone &&
-					j.pkg.LicenseConcluded != spdxLicenseNoAssertion) ||
-					(j.pkg.LicenseDeclared != "" &&
-						j.pkg.LicenseDeclared != spdxLicenseNone &&
-						j.pkg.LicenseDeclared != spdxLicenseNoAssertion)
-
-				if hasLicense {
-					continue
-				}
-
-				// Get the license from the service
-				lic, licErr := provider.Get(ctx, provider.GetOptions{
-					Purl:     j.purl,
-					Provider: s.provider,
-					Cache:    s.cache,
-					CacheTTL: s.cacheTTL,
-				})
-				if licErr != nil {
-					// Log error but continue processing other packages
-					logger.ErrorContext(ctx, "failed to get license for package",
-						"purl", j.purl,
-						"spdx_id", j.pkg.SPDXID,
-						"error", licErr)
-					continue
-				}
-				if lic != "" {
-					// Set LicenseConcluded (primary field)
-					j.pkg.LicenseConcluded = lic
-					// Also set LicenseDeclared if it's empty
-					if j.pkg.LicenseDeclared == "" ||
-						j.pkg.LicenseDeclared == spdxLicenseNone ||
-						j.pkg.LicenseDeclared == spdxLicenseNoAssertion {
-						j.pkg.LicenseDeclared = lic
-					}
-				}
-			}
-		}()
-	}
-
-	// Queue all packages
+	// Convert []Package to []*Package for interface satisfaction
+	pkgs := make([]*Package, len(doc.Packages))
 	for i := range doc.Packages {
-		pkg := &doc.Packages[i]
-		// Get the purl for the package if it exists
-		purl, purlErr := GetSPDXPackagePurl(pkg)
-		if purlErr != nil {
-			// Log error but continue processing other packages
-			logger.ErrorContext(ctx, "failed to get purl for package",
-				"spdx_id", pkg.SPDXID,
-				"error", purlErr)
-			continue
-		}
-
-		jobs <- job{pkg: pkg, purl: purl}
+		pkgs[i] = &doc.Packages[i]
 	}
 
-	// Close the channel and wait for workers to finish
-	close(jobs)
-	wg.Wait()
-
-	return json.Marshal(doc)
+	// Enrich and marshal using common helper
+	return enrichDocument(
+		ctx,
+		opts,
+		doc,
+		pkgs,
+		s.provider,
+		s.cache,
+		s.cacheTTL,
+		func(d *Document) ([]byte, error) {
+			return json.Marshal(d)
+		},
+	)
 }
