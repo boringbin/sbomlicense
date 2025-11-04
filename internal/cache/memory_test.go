@@ -179,11 +179,10 @@ func TestMemoryCache_ConcurrentAccess(t *testing.T) {
 	const numGoroutines = 100
 	const numOperations = 100
 
-	var wg sync.WaitGroup
-
 	// Concurrent writes
 	t.Run("Concurrent writes", func(t *testing.T) {
 		t.Parallel()
+		var wg sync.WaitGroup
 		wg.Add(numGoroutines)
 		for i := range numGoroutines {
 			go func(_ int) {
@@ -203,6 +202,7 @@ func TestMemoryCache_ConcurrentAccess(t *testing.T) {
 	// Concurrent reads and writes
 	t.Run("Concurrent reads and writes", func(t *testing.T) {
 		t.Parallel()
+		var wg sync.WaitGroup
 		// Pre-populate cache
 		for range 10 {
 			key := "concurrent-key"
@@ -244,6 +244,7 @@ func TestMemoryCache_ConcurrentAccess(t *testing.T) {
 	// Concurrent deletes
 	t.Run("Concurrent deletes", func(t *testing.T) {
 		t.Parallel()
+		var wg sync.WaitGroup
 		// Pre-populate cache
 		for range numGoroutines {
 			key := "delete-key"
