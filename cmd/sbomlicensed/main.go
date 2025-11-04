@@ -109,7 +109,7 @@ func run() int {
 	})
 
 	// Create server
-	srv := server.NewServer(service, cacheInstance, logger, *parallel, *cacheTTL, version.Version)
+	srv := server.NewServer(service, cacheInstance, logger, *parallel, *cacheTTL, version.Get())
 
 	// Create HTTP server
 	httpServer := &http.Server{

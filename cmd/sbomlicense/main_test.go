@@ -244,8 +244,8 @@ func TestRun_Version(t *testing.T) {
 	if !strings.Contains(output, "sbomlicense version") {
 		t.Errorf("run() --version output = %q, want to contain 'sbomlicense version'", output)
 	}
-	if !strings.Contains(output, version.Version) {
-		t.Errorf("run() --version output = %q, want to contain version %q", output, version.Version)
+	if !strings.Contains(output, version.Get()) {
+		t.Errorf("run() --version output = %q, want to contain version %q", output, version.Get())
 	}
 }
 
