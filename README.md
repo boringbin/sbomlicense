@@ -1,5 +1,7 @@
 # sbomlicense
 
+[![codecov](https://codecov.io/github/boringbin/sbomlicense/graph/badge.svg?token=3YDJGP2M6Z)](https://codecov.io/github/boringbin/sbomlicense)
+
 Two tools, `sbomlicense` and `sbomlicensed`, that enrich SBOM files with license information.
 
 Uses the [Ecosyste.ms](https://ecosyste.ms/) API to get information about a package.
