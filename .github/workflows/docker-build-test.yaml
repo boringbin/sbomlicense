@@ -1,6 +1,9 @@
 # Build the Docker image to make sure it works
 name: docker-build-test
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches:
