@@ -4,9 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/boringbin/sbomlicense/internal/cache"
@@ -58,6 +55,29 @@ type License struct {
 // LicenseText represents license text content.
 type LicenseText struct {
 	Content string `json:"content"`
+}
+
+// GetPurl extracts the purl from the CycloneDX component.
+func (c *Component) GetPurl() (string, error) {
+	return GetCycloneDXComponentPurl(c), nil
+}
+
+// HasLicense returns true if the component already has license information.
+func (c *Component) HasLicense() bool {
+	return HasComponentLicense(c)
+}
+
+// SetLicense updates the component with the provided license string.
+// Adds license using Expression format (simpler and more common).
+func (c *Component) SetLicense(license string) {
+	c.Licenses = append(c.Licenses, LicenseChoice{
+		Expression: license,
+	})
+}
+
+// GetLogID returns the BOM reference for logging purposes.
+func (c *Component) GetLogID() string {
+	return c.BOMRef
 }
 
 // ParseCycloneDXFile parses the CycloneDX file into a CycloneDX BOM.
@@ -123,8 +143,6 @@ func NewCycloneDXEnricher(
 }
 
 // Enrich enriches the CycloneDX SBOM with license information.
-//
-//nolint:gocognit // Complexity is inherent to parallel enrichment with worker pool pattern
 func (s *CycloneDXEnricher) Enrich(ctx context.Context, opts Options) ([]byte, error) {
 	// Parse the SBOM file into a CycloneDX BOM
 	bom, err := ParseCycloneDXFile(opts.SBOM)
@@ -132,82 +150,23 @@ func (s *CycloneDXEnricher) Enrich(ctx context.Context, opts Options) ([]byte, e
 		return nil, fmt.Errorf("failed to parse SBOM file: %w", err)
 	}
 
-	if len(bom.Components) == 0 {
-		// No components to enrich, return original SBOM
-		return opts.SBOM, nil
-	}
-
-	// Determine parallelism
-	parallelism := opts.Parallelism
-	if parallelism <= 0 {
-		parallelism = 1
-	}
-
-	// Use provided logger or create a no-op logger
-	logger := opts.Logger
-	if logger == nil {
-		logger = slog.New(slog.NewTextHandler(io.Discard, nil))
-	}
-
-	// Create a channel for components to enrich
-	type job struct {
-		component *Component
-		purl      string
-	}
-
-	jobs := make(chan job, len(bom.Components))
-	var wg sync.WaitGroup
-
-	// Spawn workers
-	for range parallelism {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := range jobs {
-				// Check if component already has licenses (in any format)
-				hasLicense := HasComponentLicense(j.component)
-
-				if hasLicense {
-					continue
-				}
-
-				// Get the license from the service
-				lic, licErr := provider.Get(ctx, provider.GetOptions{
-					Purl:     j.purl,
-					Provider: s.provider,
-					Cache:    s.cache,
-					CacheTTL: s.cacheTTL,
-				})
-				if licErr != nil {
-					// Log error but continue processing other components
-					logger.ErrorContext(ctx, "failed to get license for component",
-						"purl", j.purl,
-						"bom_ref", j.component.BOMRef,
-						"error", licErr)
-					continue
-				}
-				if lic != "" {
-					// Add license using Expression format (simpler and more common)
-					j.component.Licenses = append(j.component.Licenses, LicenseChoice{
-						Expression: lic,
-					})
-				}
-			}
-		}()
-	}
-
-	// Queue all components
+	// Convert []Component to []*Component for interface satisfaction
+	components := make([]*Component, len(bom.Components))
 	for i := range bom.Components {
-		component := &bom.Components[i]
-		// Get the purl for the component if it exists
-		purl := GetCycloneDXComponentPurl(component)
-
-		jobs <- job{component: component, purl: purl}
+		components[i] = &bom.Components[i]
 	}
 
-	// Close the channel and wait for workers to finish
-	close(jobs)
-	wg.Wait()
-
-	return json.Marshal(bom)
+	// Enrich and marshal using common helper
+	return enrichDocument(
+		ctx,
+		opts,
+		bom,
+		components,
+		s.provider,
+		s.cache,
+		s.cacheTTL,
+		func(b *BOM) ([]byte, error) {
+			return json.Marshal(b)
+		},
+	)
 }

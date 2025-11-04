@@ -26,7 +26,7 @@ builds:
       - darwin
     ldflags:
       - -s -w
-      - -X github.com/boringbin/sbomlicense/internal/version.Version={{.Version}}
+      - -X github.com/boringbin/sbomlicense/internal/version.version={{.Version}}
   - id: sbomlicensed
     binary: sbomlicensed
     main: ./cmd/sbomlicensed
@@ -38,7 +38,7 @@ builds:
       - darwin
     ldflags:
       - -s -w
-      - -X github.com/boringbin/sbomlicense/internal/version.Version={{.Version}}
+      - -X github.com/boringbin/sbomlicense/internal/version.version={{.Version}}
 
 archives:
   # Separate archive for CLI tool

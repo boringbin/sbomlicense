@@ -81,10 +81,10 @@ func (s *Client) Get(ctx context.Context, purl string) (string, error) {
 	}
 
 	// Set User-Agent header
-	userAgent := fmt.Sprintf("sbomlicense/%s", version.Version)
+	userAgent := fmt.Sprintf("sbomlicense/%s", version.Get())
 	if s.email != "" {
 		// See https://ecosyste.ms/api
-		userAgent = fmt.Sprintf("sbomlicense/%s (mailto:%s)", version.Version, s.email)
+		userAgent = fmt.Sprintf("sbomlicense/%s (mailto:%s)", version.Get(), s.email)
 	}
 	req.Header.Set("User-Agent", userAgent)
 

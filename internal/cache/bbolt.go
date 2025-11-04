@@ -73,9 +73,7 @@ func (c *BboltCache) Get(key string) (string, error) {
 
 		var entry bboltEntry
 		if err := json.Unmarshal(data, &entry); err != nil {
-			// Backward compatibility: treat as plain string value
-			value = string(data)
-			return nil //nolint:nilerr // Intentional: backward compatibility with non-TTL entries
+			return err
 		}
 
 		if entry.isExpired() {

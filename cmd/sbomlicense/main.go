@@ -51,7 +51,7 @@ func run() int {
 
 	// Handle version flag
 	if *showVersion {
-		fmt.Fprintf(os.Stdout, "sbomlicense version %s\n", version.Version)
+		fmt.Fprintf(os.Stdout, "sbomlicense version %s\n", version.Get())
 		return exitSuccess
 	}
 
