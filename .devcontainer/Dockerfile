@@ -1,6 +1,6 @@
 # See https://mcr.microsoft.com/v2/devcontainers/go/tags/list
 ARG VARIANT="1.25"
-FROM mcr.microsoft.com/vscode/devcontainers/go:1-${VARIANT}
+FROM mcr.microsoft.com/devcontainers/go:${VARIANT}
 
 # Install the following external dependencies:
 # 
