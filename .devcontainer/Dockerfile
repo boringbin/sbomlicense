@@ -1,5 +1,5 @@
 # See https://mcr.microsoft.com/v2/devcontainers/go/tags/list
-ARG VARIANT="1.25"
+ARG VARIANT="1.25@sha256:8c6933760f4c5dd07ec3f2838bb5e664e7c19e6186da6e8000c60c4a278a404d"
 FROM mcr.microsoft.com/devcontainers/go:${VARIANT}
 
 # Install the following external dependencies:
